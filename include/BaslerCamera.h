@@ -75,9 +75,10 @@ class Camera
       Ready, Exposure, Readout, Latency, Fault
     };
 
-    Camera(const std::string& camera_ip,int packet_size = -1);
+    Camera(const std::string& camera_ip,int packet_size = -1,int received_priority = 0);
     ~Camera();
 
+    void prepareAcq();
     void startAcq();
     void stopAcq();
     
@@ -90,7 +91,7 @@ class Camera
     void getDetectorImageSize(Size& size);
     
     // -- Buffer control object
-    HwBufferCtrlObj* getBufferMgr();
+    HwBufferCtrlObj* getBufferCtrlObj();
     
     //-- Synch control object
     void setTrigMode(TrigMode  mode);
@@ -117,6 +118,10 @@ class Camera
     void setBin(const Bin&);
     void getBin(Bin&);
 
+    void setInterPacketDelay(int ipd);
+
+    void setFrameTransmissionDelay(int ftd);
+
     void getStatus(Camera::Status& status);
     // -- basler specific, LIMA don't worry about it !
     void getFrameRate(double& frame_rate);
@@ -124,14 +129,21 @@ class Camera
     void setTimeout(int TO);
     void reset(void);
 
+    void setGain(double gain);
+    void getGain(double& gain) const;
+
+    void setAutoGain(bool auto_gain);
+    void getAutoGain(bool& auto_gain) const;
+
  private:
     class _AcqThread;
     friend class _AcqThread;
     void _stopAcq(bool);
     void _setStatus(Camera::Status status,bool force);
+    void _freeStreamGrabber();
 
     //- lima stuff
-    SoftBufferCtrlMgr		m_buffer_ctrl_mgr;
+    SoftBufferCtrlObj		m_buffer_ctrl_obj;
     int                         m_nb_frames;    
     Camera::Status              m_status;
     volatile bool               m_wait_flag;
@@ -155,6 +167,7 @@ class Camera
     size_t                        ImageSize_;
     _AcqThread*                   m_acq_thread;
     Cond                          m_cond;
+    int                           m_receive_priority;
 };
 } // namespace Basler
 } // namespace lima

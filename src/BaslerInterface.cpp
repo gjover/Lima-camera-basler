@@ -91,10 +91,10 @@ void DetInfoCtrlObj::setCurrImageType(ImageType image_type)
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
-void DetInfoCtrlObj::getPixelSize(double& size)
+void DetInfoCtrlObj::getPixelSize(double& x_size,double& y_size)
 {
     DEB_MEMBER_FUNCT();
-    size= 55.0;
+    x_size = y_size = 55.0e-6;
 }
 
 //-----------------------------------------------------
@@ -242,10 +242,15 @@ void SyncCtrlObj::getNbHwFrames(int& nb_frames)
 //-----------------------------------------------------
 void SyncCtrlObj::getValidRanges(ValidRangesType& valid_ranges)
 {
-    double min_time = 10e-9;
-    double max_time = 1e6;
+    DEB_MEMBER_FUNCT();
+    double min_time;
+    double max_time;
+
+    m_cam.getExposureTimeRange(min_time, max_time);
     valid_ranges.min_exp_time = min_time;
     valid_ranges.max_exp_time = max_time;
+
+    m_cam.getLatTimeRange(min_time, max_time);
     valid_ranges.min_lat_time = min_time;
     valid_ranges.max_lat_time = max_time;
 }
@@ -333,7 +338,8 @@ Interface::Interface(Camera& cam)
     HwDetInfoCtrlObj *det_info = &m_det_info;
     m_cap_list.push_back(HwCap(det_info));
 
-    m_cap_list.push_back(HwCap(cam.getBufferMgr()));
+    HwBufferCtrlObj *buffer = cam.getBufferCtrlObj();
+    m_cap_list.push_back(HwCap(buffer));
     
     HwSyncCtrlObj *sync = &m_sync;
     m_cap_list.push_back(HwCap(sync));
@@ -375,8 +381,6 @@ void Interface::reset(ResetLevel reset_level)
 
     stopAcq();
 
-    Size image_size;
-    m_det_info.getMaxImageSize(image_size);
     m_cam._setStatus(Camera::Ready,true);
 }
 
@@ -386,6 +390,7 @@ void Interface::reset(ResetLevel reset_level)
 void Interface::prepareAcq()
 {
     DEB_MEMBER_FUNCT();
+    m_cam.prepareAcq();
 }
 
 //-----------------------------------------------------
